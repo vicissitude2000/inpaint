@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inpaint Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .vertical-align-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #image-preview, #second-image-preview {
+            width: 400px; /* 设置宽度 */
+            height: 400px; /* 设置高度 */
+            border: 1px dashed black; /* 添加虚线边框 */
+            max-width: 100%;
+            max-height: 400px;
+            margin-top: 20px;
+            box-sizing: border-box;
+        }
+
+        #text-input {
+            width: 400px;
+            height: 40px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        #clear-button {
+            width: 100px;
+            height: 40px;
+            background-color: blue;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-left: 15px;
+            margin-top: 20px;
+            font-size: 20px;
+        }
+        .input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center; 
+        }
+        .image-container {
+            display: flex;
+            flex-direction: row; /* 修改: 将 flex-direction 改为 row 以实现水平排列 */
+            justify-content: center; /* 修改: 将 justify-content 改为 center 以使两个图片整体居中 */
+            gap: 55px; /* 添加: 设置两个图片之间的间隔为20像素 */
+        }
+        #second-image-preview {
+            margin-left: 0; /* 修改: 删除 margin-left: auto 以取消将图片推到右侧 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    
+
+
+        <div class="image-container">
+            <img id="image-preview" src="#" alt="Image">
+            <img id="second-image-preview" src="#" alt="Result">
+        </div>
+
+        <div class="input-container">
+            <h2>上传图像</h2>
+            <input type="file" id="image-upload" accept="image/*">
+            <input type="text" id="text-input" placeholder="请输入提示词">
+            <button id="clear-button">去除</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('image-upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('image-preview');
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            // 添加: 清空 second-image-preview 的内容
+            document.getElementById('second-image-preview').src = '#';
+        });
+
+        // 添加: 清除按钮的点击事件监听器
+        document.getElementById('clear-button').addEventListener('click', function() {
+            const fileInput = document.getElementById('image-upload');
+            const file = fileInput.files[0];
+            const textInput = document.getElementById('text-input');
+            const text = textInput.value;
+
+            if (!file) {
+                alert('请先上传图像');
+                return;
+            }
+
+            if (!text) {
+                alert('请输入提示词');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('text', text);
+
+            fetch('http://10.129.46.212:5000/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const img = document.getElementById('second-image-preview');
+                img.src = URL.createObjectURL(blob);
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
